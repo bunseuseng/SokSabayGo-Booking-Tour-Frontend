@@ -9,26 +9,36 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
+
+// Main site pages
 import Index from "./pages/Index";
-import SearchPage from "./pages/SearchPage";
 import TripDetail from "./pages/TripDetail";
-import BookingPage from "./pages/BookingPage";
-import BookingHistory from "./pages/BookingHistory";
 import DriverRequest from "./pages/DriverRequest";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import ChatPage from "./pages/ChatPage";
-import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+
+// User pages
+import NotificationsPage from "./pages/user/NotificationsPage";
+import ProfilePage from "./pages/user/ProfilePage";
+import ChatPage from "./pages/user/ChatPage";
+import BookingHistory from "./pages/user/BookingHistory";
+import BookingPage from "./pages/user/BookingPage";
+import SearchPage from "./pages/user/SearchPage";
+
+// Admin pages 
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminTours from "./pages/admin/AdminTours";
-import AdminBookings from "./pages/admin/AdminBookings";
 import AdminDrivers from "./pages/admin/AdminDrivers";
 import AdminUsers from "./pages/admin/AdminUsers";
-import AdminReviews from "./pages/admin/AdminReviews";
+
+// Driver pages
+import DriverLayout from "./pages/driver/DriverLayout";
+import DriverDashboard from "./pages/driver/DriverDashboard";
+import DriverTours from "./pages/driver/DriverTours";
+import DriverBookings from "./pages/driver/DriverBookings";
+import DriverReviews from "./pages/driver/DriverReviews";
 
 const queryClient = new QueryClient();
 
@@ -68,11 +78,16 @@ const App = () => (
             {/* Admin routes — separate layout */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="tours" element={<AdminTours />} />
-              <Route path="bookings" element={<AdminBookings />} />
               <Route path="drivers" element={<AdminDrivers />} />
               <Route path="users" element={<AdminUsers />} />
-              <Route path="reviews" element={<AdminReviews />} />
+            </Route>
+
+            {/* Driver routes — separate layout */}
+            <Route path="/driver" element={<DriverLayout />}>
+              <Route index element={<DriverDashboard />} />
+              <Route path="tours" element={<DriverTours />} />
+              <Route path="bookings" element={<DriverBookings />} />
+              <Route path="reviews" element={<DriverReviews />} />
             </Route>
 
             {/* Main site routes — with sidebar + footer */}

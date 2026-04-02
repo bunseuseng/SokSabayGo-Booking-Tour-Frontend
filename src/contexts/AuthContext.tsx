@@ -8,7 +8,8 @@ export interface User {
   contactNumber?: string;
   gender?: string;
   avatarUrl?: string;
-  role: ("USER" | "ADMIN" | "DRIVER")[];
+  profileImage?: string;
+  roles: string[];
 }
 
 interface AuthContextType {
@@ -16,9 +17,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isDriver: boolean;
-  login: (email: string, password: string) => Promise<User | null>;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   register: (fullName: string, email: string, contactNumber: string, gender: string, password: string) => Promise<boolean>;
-  fetchMe: () => Promise<User | null>;
+  fetchMe: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   logout: () => void;
 }
@@ -26,6 +28,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [loading, setLoading] = useState(true);
+
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem("soksabay_user");
@@ -42,55 +46,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem("soksabay_user");
   };
 
-  const fetchMe = useCallback(async (): Promise<User | null> => {
-    try {
-      const res = await api.get(AUTH_API.ME);
-      const payload = res.data.data ?? res.data;
-
-      const normalizedRole = (payload.roles || [])
-        .map((r: string) => r.replace(/^ROLE_/i, "").toUpperCase())
-        .filter((r: string): r is "ADMIN" | "USER" | "DRIVER" => ["ADMIN", "USER", "DRIVER"].includes(r));
-
-      const userData: User = {
-        id: String(payload.id || payload.userId),
-        fullName: payload.fullName,
-        email: payload.email,
-        contactNumber: payload.contactNumber,
-        gender: payload.gender,
-        avatarUrl: payload.avatarUrl,
-        role: normalizedRole.length ? normalizedRole : ["USER"],
-      };
-
-      persistUser(userData);
-      return userData;
-    } catch (err) {
-      console.error("Fetch me failed", err);
-      return null;
-    }
-  }, []);
+const fetchMe = useCallback(async () => {
+  try {
+    const res = await api.get(AUTH_API.ME);
+    // console.log("fetchMe response:", res.data);
+    persistUser(res.data);
+  } catch (err) {
+    // console.error("fetchMe error:", err);
+    persistUser(null);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
       const res = await api.post(AUTH_API.LOGIN, { email, password });
-      const token = res.data.data.accessToken;
-      if (!token) throw new Error("No token returned from login");
+      const accessToken = res.data.data.accessToken;
+      localStorage.setItem("token", accessToken);
+      sessionStorage.setItem("token", accessToken);
 
-      localStorage.setItem("soksabay_token", token);
-      api.defaults.headers.common.Authorization = `Bearer ${token}`;
-
-      return await fetchMe();
+      await fetchMe();
+      return true;
     } catch (err) {
       console.error("Login failed", err);
-      return null;
+      return false;
     }
   }, [fetchMe]);
 
-  const register = useCallback(async (fullName: string, email: string, contactNumber: string, gender: string, password: string) => {
+  const register = useCallback(async (
+    fullName: string,
+    email: string,
+    contactNumber: string,
+    gender: string,
+    password: string
+  ) => {
     try {
-      await api.post(AUTH_API.REGISTER, { fullName, email, contactNumber, gender, password });
+      await api.post(AUTH_API.REGISTER, {
+        fullName,
+        email,
+        contactNumber,
+        gender,
+        password,
+      });
       await fetchMe();
       return true;
-    } catch {
+    } catch (err) {
+      console.error("Register failed", err);
       return false;
     }
   }, [fetchMe]);
@@ -104,13 +106,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("soksabay_token");
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/api/v1/auth/logout");
+    } catch {}
+    localStorage.removeItem("token");
     persistUser(null);
   }, []);
 
   useEffect(() => {
-    if (!user) fetchMe();
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchMe();
+    } else {
+      setLoading(false);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -118,8 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
-        isAdmin: user?.role.includes("ADMIN") ?? false,
-        isDriver: user?.role.includes("DRIVER") ?? false,
+        isAdmin: user?.roles?.includes("ROLE_ADMIN") ?? false,
+        isDriver: user?.roles?.includes("ROLE_DRIVER") ?? false,
+        loading,
         login,
         register,
         fetchMe,

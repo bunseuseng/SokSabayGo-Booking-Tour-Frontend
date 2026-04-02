@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { api, uploadFile } from "@/lib/api";
+import { api, AUTH_API, MEDIA_API } from "@/lib/api";
 import { Camera, Loader2, Shield, Car, User as UserIcon, Save, ArrowLeft } from "lucide-react";
 
 const roleBadge: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
@@ -34,15 +34,19 @@ const ProfilePage = () => {
     return null;
   }
 
-  const badge = roleBadge[user.role[0]] || roleBadge.USER;
+  const badge = roleBadge[user.roles[0]] || roleBadge.USER;
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadFile(file);
-      setAvatarUrl(url);
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await api.post(MEDIA_API.UPLOAD, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setAvatarUrl(data.secure_url);
       toast({ title: "Avatar uploaded ✅" });
     } catch {
       toast({ title: "Upload failed", variant: "destructive" });
@@ -53,8 +57,14 @@ const ProfilePage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data } = await api.put("/api/v1/users/me", { ...form, avatarUrl });
-      updateUser(data.data ?? data);
+      // PUT /users/me — adjust if your backend uses a different method/shape
+      const { data } = await api.put(AUTH_API.UPDATE_ME, {
+        fullName: form.fullName,
+        contactNumber: form.contactNumber,
+        gender: form.gender,
+        avatarUrl,
+      });
+      updateUser(data);
       toast({ title: "Profile updated! ✅" });
     } catch {
       toast({ title: "Update failed", variant: "destructive" });
@@ -77,6 +87,7 @@ const ProfilePage = () => {
         </button>
 
         <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+          {/* Avatar + Role */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative group">
               {avatarUrl ? (
@@ -109,6 +120,7 @@ const ProfilePage = () => {
 
           <div className="border-t border-border" />
 
+          {/* Edit form */}
           <div className="space-y-4">
             <div>
               <Label className="mb-2 block">Full Name</Label>
@@ -125,7 +137,11 @@ const ProfilePage = () => {
             </div>
             <div>
               <Label className="mb-2 block">Gender</Label>
-              <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="h-12 w-full border border-input bg-background rounded-md px-3 text-sm">
+              <select
+                value={form.gender}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                className="h-12 w-full border border-input bg-background rounded-md px-3 text-sm"
+              >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>

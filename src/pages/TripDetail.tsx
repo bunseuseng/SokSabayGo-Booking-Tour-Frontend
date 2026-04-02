@@ -1,72 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, MapPin, Clock, User, CheckCircle, Send } from "lucide-react";
+import { MapPin, Calendar, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import StarRating from "@/components/StarRating";
-import { trips, sampleReviews, type Review } from "@/lib/data";
-import { toast } from "@/hooks/use-toast";
+import { api, PUBLIC_TRIPS_API } from "@/lib/api";
+import type { ApiTrip } from "@/lib/api";
 
 const TripDetail = () => {
   const { id } = useParams();
-  const trip = trips.find((t) => t.id === id);
-  const [reviews, setReviews] = useState<Review[]>(sampleReviews);
-  const [newRating, setNewRating] = useState(0);
-  const [newComment, setNewComment] = useState("");
+  const [trip, setTrip] = useState<ApiTrip | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!trip) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Trip not found
-      </div>
-    );
+  useEffect(() => {
+    if (!id) return;
+    api.get(PUBLIC_TRIPS_API.DETAIL(id))
+      .then(({ data }) => setTrip(data.data || data))
+      .catch(() => setTrip(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
-  // TODO: Fetch trip details from API:
-  // const trip = await apiFetch(TRIPS_API.DETAIL(id));
-  // TODO: Fetch reviews from API:
-  // const reviews = await apiFetch(TRIPS_API.REVIEWS(id));
-
-  const handleSubmitReview = async () => {
-    if (newRating === 0) {
-      toast({ title: "Please select a rating", variant: "destructive" });
-      return;
-    }
-    if (!newComment.trim()) {
-      toast({ title: "Please write a comment", variant: "destructive" });
-      return;
-    }
-
-    // TODO: Replace with real API call:
-    // await apiFetch(TRIPS_API.SUBMIT_REVIEW(id!), {
-    //   method: "POST",
-    //   body: JSON.stringify({ rating: newRating, comment: newComment.trim() }),
-    // });
-
-    const review: Review = {
-      id: `r${Date.now()}`,
-      userName: "You",
-      rating: newRating,
-      comment: newComment.trim(),
-      date: new Date().toISOString().split("T")[0],
-    };
-    setReviews((prev) => [review, ...prev]);
-    setNewRating(0);
-    setNewComment("");
-    toast({ title: "Review submitted!", description: "Thank you for your feedback." });
-  };
+  if (!trip) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Trip not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero image */}
       <div className="relative h-[35vh] md:h-[45vh]">
-        <img src={trip.image} alt={trip.title} className="w-full h-full object-cover" />
+        <img src={trip.images?.[0] || "/placeholder.svg"} alt={trip.title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent" />
         <div className="absolute bottom-6 left-0 right-0 container mx-auto px-4">
           <div className="flex items-center gap-2 text-card/80 text-sm mb-2">
-            <MapPin size={14} /> {trip.location}
+            <MapPin size={14} /> {trip.origin} → {trip.destination}
             <span className="mx-1">·</span>
-            <Clock size={14} /> {trip.duration}
+            <Calendar size={14} /> {new Date(trip.departureTime).toLocaleDateString()}
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-card">{trip.title}</h1>
         </div>
@@ -77,61 +47,42 @@ const TripDetail = () => {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
             <div>
-              <h2 className="text-xl font-bold mb-3">About This Tour</h2>
-              <p className="text-muted-foreground leading-relaxed">{trip.description}</p>
+              <h2 className="text-xl font-bold mb-3">About This Trip</h2>
+              <p className="text-muted-foreground leading-relaxed">{trip.description || "No description provided."}</p>
             </div>
 
-            <div>
-              <h2 className="text-xl font-bold mb-3">Highlights</h2>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {trip.highlights.map((h) => (
-                  <li key={h} className="flex items-center gap-2 text-muted-foreground">
-                    <CheckCircle size={16} className="text-success shrink-0" /> {h}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Write a Review */}
-            <div>
-              <h2 className="text-xl font-bold mb-4">Write a Review</h2>
-              <div className="bg-card p-5 rounded-xl border border-border space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-card-foreground mb-2 block">Your Rating</label>
-                  <StarRating rating={newRating} onChange={setNewRating} size={28} />
+            {/* Trip images gallery */}
+            {trip.images && trip.images.length > 1 && (
+              <div>
+                <h2 className="text-xl font-bold mb-3">Photos</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {trip.images.map((img, i) => (
+                    <img key={i} src={img} alt={`${trip.title} ${i + 1}`} className="w-full h-40 object-cover rounded-xl border border-border" />
+                  ))}
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-card-foreground mb-2 block">Your Comment</label>
-                  <Textarea
-                    placeholder="Share your experience..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="min-h-[100px]"
-                    maxLength={500}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{newComment.length}/500</p>
-                </div>
-                <Button onClick={handleSubmitReview} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Send size={16} className="mr-2" />
-                  Submit Review
-                </Button>
               </div>
-            </div>
+            )}
 
-            {/* Reviews */}
+            {/* Trip details */}
             <div>
-              <h2 className="text-xl font-bold mb-4">Reviews ({reviews.length})</h2>
-              <div className="space-y-4">
-                {reviews.map((r) => (
-                  <div key={r.id} className="bg-card p-5 rounded-xl border border-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-sm">{r.userName}</span>
-                      <StarRating rating={r.rating} size={14} />
-                    </div>
-                    <p className="text-muted-foreground text-sm">{r.comment}</p>
-                    <p className="text-xs text-muted-foreground/60 mt-2">{r.date}</p>
-                  </div>
-                ))}
+              <h2 className="text-xl font-bold mb-3">Trip Details</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Origin</p>
+                  <p className="font-medium">{trip.origin}</p>
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Destination</p>
+                  <p className="font-medium">{trip.destination}</p>
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Departure</p>
+                  <p className="font-medium">{new Date(trip.departureTime).toLocaleString()}</p>
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Category</p>
+                  <p className="font-medium">{trip.categoryName || "—"}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -141,13 +92,16 @@ const TripDetail = () => {
             <div className="bg-card rounded-xl border border-border p-6 sticky top-20 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <span className="text-3xl font-bold text-primary">${trip.price}</span>
-                  <span className="text-muted-foreground text-sm"> / person</span>
+                  <span className="text-3xl font-bold text-primary">${trip.pricePerSeat}</span>
+                  <span className="text-muted-foreground text-sm"> / seat</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star size={16} className="fill-accent text-accent" />
-                  <span className="font-semibold">{trip.rating}</span>
-                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  trip.status === "AVAILABLE" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                }`}>{trip.status}</span>
+              </div>
+
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex justify-between"><span className="text-muted-foreground">Available Seats</span><span>{trip.availableSeats}/{trip.totalSeats}</span></div>
               </div>
 
               {/* Driver info */}
@@ -156,16 +110,20 @@ const TripDetail = () => {
                   <User size={20} className="text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">{trip.driver.name}</p>
-                  <p className="text-xs text-muted-foreground">{trip.driver.trips} trips · {trip.driver.rating}★</p>
+                  <p className="font-medium text-sm">{trip.driverName}</p>
+                  <p className="text-xs text-muted-foreground">Driver</p>
                 </div>
               </div>
 
-              <Link to={`/booking/${trip.id}`}>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base">
-                  Book This Trip
-                </Button>
-              </Link>
+              {trip.status === "AVAILABLE" && trip.availableSeats > 0 ? (
+                <Link to={`/booking/${trip.id}`}>
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base">
+                    Book This Trip
+                  </Button>
+                </Link>
+              ) : (
+                <Button disabled className="w-full h-12 text-base">Fully Booked</Button>
+              )}
             </div>
           </div>
         </div>

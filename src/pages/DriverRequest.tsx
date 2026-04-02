@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,20 +6,41 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthGuardDialog from "@/components/AuthGuardDialog";
 import { api, DRIVER_API, MEDIA_API } from "@/lib/api";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+
+interface DriverApplication {
+  id: number;
+  nationalId: string;
+  licenseNumber: string;
+  vehicleType: string;
+  idCardImageUrl: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
 
 const DriverRequest = () => {
   const { isAuthenticated } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
-  const [form, setForm] = useState({
-    nationalId: "",
-    licenseNumber: "",
-    vehicleType: "",
-  });
+  const [existing, setExisting] = useState<DriverApplication | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [form, setForm] = useState({ nationalId: "", licenseNumber: "", vehicleType: "" });
   const [idCardImageUrl, setIdCardImageUrl] = useState("");
   const [idCardPublicId, setIdCardPublicId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setCheckingStatus(false); return; }
+    api.get(DRIVER_API.MY)
+      .then(({ data }) => {
+        const app = data.data || data;
+        if (app && app.id) setExisting(app);
+      })
+      .catch(() => {})
+      .finally(() => setCheckingStatus(false));
+  }, [isAuthenticated]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,9 +49,7 @@ const DriverRequest = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const { data } = await api.post(MEDIA_API.UPLOAD, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await api.post(MEDIA_API.UPLOAD, formData, { headers: { "Content-Type": "multipart/form-data" } });
       setIdCardImageUrl(data.secure_url);
       setIdCardPublicId(data.public_id);
       toast({ title: "ID card uploaded ✅" });
@@ -49,29 +68,83 @@ const DriverRequest = () => {
     }
     setLoading(true);
     try {
-      await api.post(DRIVER_API.APPLY, {
-        ...form,
-        idCardImageUrl,
-        idCardPublicId,
-      });
-      toast({ title: "Application Submitted! 🚗", description: "We'll review your request and get back to you soon." });
+      const payload = { ...form, idCardImageUrl, idCardPublicId };
+      if (existing && existing.status === "REJECTED") {
+        const { data } = await api.put(DRIVER_API.REAPPLY(existing.id), payload);
+        setExisting(data.data || data);
+        toast({ title: "Application re-submitted! 🚗" });
+      } else {
+        const { data } = await api.post(DRIVER_API.APPLY, payload);
+        setExisting(data.data || data);
+        toast({ title: "Application Submitted! 🚗", description: "We'll review your request and get back to you soon." });
+      }
       setForm({ nationalId: "", licenseNumber: "", vehicleType: "" });
       setIdCardImageUrl("");
       setIdCardPublicId("");
-    } catch {
-      toast({ title: "Submission failed", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err?.response?.data?.message || "Submission failed", variant: "destructive" });
     }
     setLoading(false);
   };
+
+  if (checkingStatus) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  // Show status page for PENDING or APPROVED
+  if (existing && existing.status === "PENDING") {
+    return (
+      <div className="min-h-screen bg-background py-10">
+        <div className="container mx-auto px-4 max-w-lg text-center">
+          <div className="bg-card rounded-xl border border-border p-8">
+            <Clock className="h-16 w-16 text-accent mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Application Under Review</h1>
+            <p className="text-muted-foreground mb-4">Your driver application is being reviewed by our team. We'll notify you once it's processed.</p>
+            <p className="text-xs text-muted-foreground">Submitted: {new Date(existing.createdAt).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (existing && existing.status === "APPROVED") {
+    return (
+      <div className="min-h-screen bg-background py-10">
+        <div className="container mx-auto px-4 max-w-lg text-center">
+          <div className="bg-card rounded-xl border border-border p-8">
+            <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">You're a Verified Driver! 🎉</h1>
+            <p className="text-muted-foreground">Your application has been approved. You can now create trips from the Driver Panel.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show form for new application or REJECTED reapply
+  const isReapply = existing?.status === "REJECTED";
 
   return (
     <div className="min-h-screen bg-background py-10">
       <AuthGuardDialog open={showAuth} onOpenChange={setShowAuth} message="Please create an account before requesting to become a driver." />
       <div className="container mx-auto px-4 max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold">Become a Driver</h1>
-          <p className="text-muted-foreground mt-2">Join our network and earn money giving rides</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{isReapply ? "Reapply as Driver" : "Become a Driver"}</h1>
+          <p className="text-muted-foreground mt-2">
+            {isReapply ? "Your previous application was rejected. Please update your details and try again." : "Join our network and earn money giving rides"}
+          </p>
         </div>
+
+        {isReapply && existing?.rejectionReason && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-destructive">Rejection Reason</p>
+              <p className="text-sm text-muted-foreground">{existing.rejectionReason}</p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-border p-6 space-y-5">
           <div>
             <Label className="mb-2 block">National ID *</Label>
@@ -103,7 +176,9 @@ const DriverRequest = () => {
             </div>
           </div>
           <Button type="submit" disabled={loading || uploading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base">
-            {loading ? "Submitting..." : "Submit Driver Application"}
+            {loading ? "Submitting..." : isReapply ? (
+              <><RefreshCw className="h-4 w-4 mr-2" /> Reapply</>
+            ) : "Submit Driver Application"}
           </Button>
         </form>
       </div>
