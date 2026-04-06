@@ -26,7 +26,7 @@ const RegisterPage = () => {
       toast({ title: "Account created! 🎉" });
       navigate("/");
     } else {
-      toast({ title: "Registration failed", variant: "destructive" });
+      toast({ title: "Registration failed. Please check your information and try again.", variant: "destructive" });
     }
     setLoading(false);
   };

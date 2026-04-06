@@ -7,6 +7,7 @@ const navItems = [
   { to: "/driver/tours", icon: Map, label: "Tours" },
   { to: "/driver/bookings", icon: CalendarDays, label: "Bookings" },
   { to: "/driver/reviews", icon: Star, label: "Reviews" },
+  { to: "/chat", icon: Users, label: "Chat" },
 ];
 
 const DriverLayout = () => {
