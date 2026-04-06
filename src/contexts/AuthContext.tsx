@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { api, AUTH_API } from "@/lib/api";
+import { api, AUTH_API, KEYS } from "@/lib/api";
 
 export interface User {
   id: string;
@@ -20,7 +20,8 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (fullName: string, email: string, contactNumber: string, gender: string, password: string) => Promise<boolean>;
-  fetchMe: () => Promise<void>;
+  fetchMe: (token?: string) => Promise<void>;
+  loginWithGoogle: () => void;
   updateUser: (updates: Partial<User>) => void;
   logout: () => void;
 }
@@ -30,49 +31,55 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const stored = localStorage.getItem("soksabay_user");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      localStorage.removeItem("soksabay_user");
-      return null;
-    }
-  });
+   const [user, setUser] = useState<User | null>(() => {
+     try {
+       const stored = localStorage.getItem(KEYS.USER);
+       return stored ? JSON.parse(stored) : null;
+     } catch {
+       localStorage.removeItem(KEYS.USER);
+       return null;
+     }
+   });
+ 
+   const persistUser = (u: User | null) => {
+     setUser(u);
+     if (u) localStorage.setItem(KEYS.USER, JSON.stringify(u));
+     else localStorage.removeItem(KEYS.USER);
+   };
 
-  const persistUser = (u: User | null) => {
-    setUser(u);
-    if (u) localStorage.setItem("soksabay_user", JSON.stringify(u));
-    else localStorage.removeItem("soksabay_user");
-  };
+ const fetchMe = useCallback(async (token?: string) => {
+   try {
+     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+     const res = await api.get(AUTH_API.ME, config);
+     persistUser(res.data);
+   } catch (err) {
+     persistUser(null);
+   } finally {
+     setLoading(false);
+   }
+ }, []);
 
-const fetchMe = useCallback(async () => {
-  try {
-    const res = await api.get(AUTH_API.ME);
-    // console.log("fetchMe response:", res.data);
-    persistUser(res.data);
-  } catch (err) {
-    // console.error("fetchMe error:", err);
-    persistUser(null);
-  } finally {
-    setLoading(false);
-  }
-}, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      const res = await api.post(AUTH_API.LOGIN, { email, password });
-      const accessToken = res.data.data.accessToken;
-      localStorage.setItem("token", accessToken);
-      sessionStorage.setItem("token", accessToken);
-
-      await fetchMe();
-      return true;
-    } catch (err) {
-      console.error("Login failed", err);
-      return false;
-    }
-  }, [fetchMe]);
+   const login = useCallback(async (email: string, password: string) => {
+     try {
+       const res = await api.post(AUTH_API.LOGIN, { email, password });
+       const accessToken = res.data.data.accessToken;
+       localStorage.setItem(KEYS.ACCESS, accessToken);
+       sessionStorage.setItem(KEYS.ACCESS, accessToken);
+ 
+       await fetchMe(accessToken);
+       return true;
+     } catch (err) {
+       console.error("Login failed", err);
+       return false;
+     }
+   }, [fetchMe]);
+ 
+   const loginWithGoogle = useCallback(() => {
+     localStorage.setItem(KEYS.HINT, "true");
+     localStorage.removeItem(KEYS.ACCESS);
+     localStorage.removeItem(KEYS.REFRESH);
+     window.location.href = AUTH_API.GOOGLE_OAUTH;
+   }, []);
 
   const register = useCallback(async (
     fullName: string,
@@ -101,27 +108,60 @@ const fetchMe = useCallback(async () => {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...updates };
-      localStorage.setItem("soksabay_user", JSON.stringify(updated));
+      localStorage.setItem(KEYS.USER, JSON.stringify(updated));
       return updated;
     });
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await api.post("/api/v1/auth/logout");
-    } catch {}
-    localStorage.removeItem("token");
-    persistUser(null);
-  }, []);
+   const logout = useCallback(async () => {
+     try {
+       await api.post("/api/v1/auth/logout");
+     } catch {}
+     localStorage.removeItem(KEYS.ACCESS);
+     localStorage.removeItem(KEYS.REFRESH);
+     localStorage.removeItem(KEYS.HINT);
+     persistUser(null);
+   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+   useEffect(() => {
+     const initAuth = async () => {
+       const params = new URLSearchParams(window.location.search);
+       const urlToken = params.get("accessToken");
+       if (urlToken) {
+         localStorage.setItem(KEYS.ACCESS, urlToken);
+         window.history.replaceState({}, document.title, window.location.pathname);
+       }
+ 
+       const token = localStorage.getItem(KEYS.ACCESS);
+       const hasHint = localStorage.getItem(KEYS.HINT) === "true";
+ 
+       if (token || hasHint) {
+         await fetchMe(token || undefined);
+       } else {
+         setLoading(false);
+       }
+     };
+     initAuth();
+   }, [fetchMe]);
+ 
+   useEffect(() => {
+     if (!user) return;
+ 
+     const refreshInterval = setInterval(async () => {
+       try {
+         const res = await api.get(AUTH_API.WS_TOKEN);
+         const newToken = res.data.data.accessToken;
+         if (newToken) {
+           localStorage.setItem(KEYS.ACCESS, newToken);
+           sessionStorage.setItem(KEYS.ACCESS, newToken);
+         }
+       } catch (err) {
+         console.error("Token refresh failed", err);
+       }
+     }, 45 * 60 * 1000); 
+ 
+     return () => clearInterval(refreshInterval);
+   }, [user]);
 
   return (
     <AuthContext.Provider
@@ -131,12 +171,13 @@ const fetchMe = useCallback(async () => {
         isAdmin: user?.roles?.includes("ROLE_ADMIN") ?? false,
         isDriver: user?.roles?.includes("ROLE_DRIVER") ?? false,
         loading,
-        login,
-        register,
-        fetchMe,
-        updateUser,
-        logout,
-      }}
+         login,
+         loginWithGoogle,
+         register,
+         fetchMe,
+         updateUser,
+         logout,
+       }}
     >
       {children}
     </AuthContext.Provider>
