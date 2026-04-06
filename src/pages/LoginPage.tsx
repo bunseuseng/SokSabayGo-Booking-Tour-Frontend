@@ -10,7 +10,7 @@ import { FcGoogle } from "react-icons/fc";
 import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +35,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = AUTH_API.GOOGLE_OAUTH;
+    loginWithGoogle();
   };
 
   return (

@@ -1,10 +1,11 @@
 import axios from "axios";
 
 // URL server backend (déployé sur Render)
-const BASE_URL = "https://service-provider-latest-2.onrender.com";
+// const BASE_URL = "https://service-provider-latest-2.onrender.com";
 
 // URL locale pour développement
 // const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8080";
 
 /** Axios instance with credentials (HTTP-only JWT cookies) */
 export const api = axios.create({
@@ -15,7 +16,7 @@ export const api = axios.create({
 
 // Automatically attach token from localStorage to Authorization header if present
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem(KEYS.ACCESS);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -37,6 +38,14 @@ export const AUTH_API = {
   ME: "/api/v1/users/me",
   UPDATE_ME: "/api/v1/users/me",
   GOOGLE_OAUTH: "http://localhost:8080/oauth2/authorization/google",
+  WS_TOKEN: "/api/v1/auth-service/ws-token",
+};
+
+export const KEYS = {
+  ACCESS: "token",
+  USER: "soksabay_user",
+  REFRESH: "refresh_token",
+  HINT: "oauth2_hint",
 };
 
 // ─── Media Upload ─────────────────────────────────────────────
