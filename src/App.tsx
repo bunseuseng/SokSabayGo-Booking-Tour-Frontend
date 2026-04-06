@@ -7,8 +7,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Main site pages
 import Index from "./pages/Index";
@@ -65,52 +69,68 @@ const AnimatedRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Auth pages — no sidebar, no footer */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/oauth/callback" element={<GoogleCallbackPage />} />
+      <NotificationProvider>
+        <ChatProvider>
+          <TooltipProvider>
+            <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Auth pages — no sidebar, no footer */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/oauth/callback" element={<GoogleCallbackPage />} />
 
-            {/* Admin routes — separate layout */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="drivers" element={<AdminDrivers />} />
-              <Route path="users" element={<AdminUsers />} />
-            </Route>
+                {/* Admin routes — separate layout */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="drivers" element={<AdminDrivers />} />
+                  <Route path="users" element={<AdminUsers />} />
+                </Route>
 
-            {/* Driver routes — separate layout */}
-            <Route path="/driver" element={<DriverLayout />}>
-              <Route index element={<DriverDashboard />} />
-              <Route path="tours" element={<DriverTours />} />
-              <Route path="bookings" element={<DriverBookings />} />
-              <Route path="reviews" element={<DriverReviews />} />
-            </Route>
+                {/* Driver routes — separate layout */}
+                <Route path="/driver" element={<DriverLayout />}>
+                  <Route index element={<DriverDashboard />} />
+                  <Route path="tours" element={<DriverTours />} />
+                  <Route path="bookings" element={<DriverBookings />} />
+                  <Route path="reviews" element={<DriverReviews />} />
+                </Route>
 
-            {/* Main site routes — with sidebar + footer */}
-            <Route path="*" element={
-              <SidebarProvider>
-                <div className="min-h-screen flex w-full">
-                  <AppSidebar />
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <header className="h-12 flex items-center border-b border-border bg-card sticky top-0 z-40">
-                      <SidebarTrigger className="ml-3" />
-                      <span className="ml-3 text-sm font-semibold text-muted-foreground">Soksabay Go</span>
-                    </header>
-                    <main className="flex-1">
-                      <AnimatedRoutes />
-                    </main>
-                    <Footer />
-                  </div>
-                </div>
-              </SidebarProvider>
-            } />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+                {/* Main site routes — with sidebar + footer */}
+                <Route path="*" element={
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <header className="h-12 flex items-center border-b border-border bg-card sticky top-0 z-40">
+                          <SidebarTrigger className="ml-3" />
+                          <span className="ml-3 text-sm font-semibold text-muted-foreground">Soksabay Go</span>
+                        </header>
+                        <main className="flex-1">
+                          <AnimatedRoutes />
+                        </main>
+                        <Footer />
+                      </div>
+                    </div>
+                  </SidebarProvider>
+                } />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ChatProvider>
+      </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

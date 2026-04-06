@@ -2,6 +2,8 @@ import { Home, Search, CalendarDays, Car, LogIn, UserPlus, Bell, MessageCircle, 
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { useChat } from "@/contexts/ChatContext";
 import logo from "@/assets/logo.png";
 
 import {
@@ -18,16 +20,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+  chatBadge?: boolean;
+};
+
 const guestItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Search Tours", url: "/search", icon: Search },
 ];
 
-const userItems = [
+const userItemsWithoutBadge = [
   { title: "Home", url: "/", icon: Home },
   { title: "Search Tours", url: "/search", icon: Search },
   { title: "My Bookings", url: "/bookings", icon: CalendarDays },
-  { title: "Messages", url: "/chat", icon: MessageCircle },
+  { title: "Messages", url: "/chat", icon: MessageCircle, chatBadge: true },
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Become a Driver", url: "/driver-request", icon: Car },
 ];
@@ -35,7 +45,7 @@ const userItems = [
 const driverItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Driver Panel", url: "/driver", icon: LayoutDashboard },
-  { title: "Messages", url: "/chat", icon: MessageCircle },
+  { title: "Messages", url: "/chat", icon: MessageCircle, chatBadge: true },
   { title: "Notifications", url: "/notifications", icon: Bell },
 ];
 
@@ -49,6 +59,9 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { user, isAuthenticated, isAdmin, isDriver, loading, logout } = useAuth();
+  const { unreadCount: notificationCount } = useNotifications();
+  const { unreadCount: chatCount } = useChat();
+  const totalUnread = notificationCount + chatCount;
 
   const isActive = (path: string) => currentPath === path;
 
@@ -70,11 +83,16 @@ export function AppSidebar() {
   }
 
   // Determine menu items based on role
-  let navItems = guestItems;
+  let navItems: NavItem[] = guestItems;
   if (isAuthenticated) {
     if (isAdmin) navItems = adminItems;
-    else if (isDriver) navItems = driverItems;
-    else navItems = userItems;
+    else if (isDriver) navItems = driverItems.map(item => 
+      item.chatBadge ? { ...item, badge: chatCount > 0 ? chatCount : 0 } : item
+    );
+    else navItems = userItemsWithoutBadge.map(item => 
+      item.title === "Notifications" ? { ...item, badge: notificationCount > 0 ? notificationCount : 0 } : 
+      item.chatBadge ? { ...item, badge: chatCount > 0 ? chatCount : 0 } : item
+    );
   }
 
   const roleLabel = isAdmin ? "Admin" : isDriver ? "Driver" : "User";
@@ -108,6 +126,11 @@ export function AppSidebar() {
                     <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent/50 relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
+                      {item.badge && item.badge > 0 && (
+                        <span className="ml-auto bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

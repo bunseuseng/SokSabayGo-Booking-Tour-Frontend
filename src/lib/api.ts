@@ -106,15 +106,23 @@ export const BOOKINGS_API = {
 export const NOTIFICATIONS_API = {
   LIST: "/api/v1/notifications",
   MARK_READ: (id: string | number) => `/api/v1/notifications/${id}/read`,
+  MARK_ALL_READ: "/api/v1/notifications/read-all",
 };
 
 // ─── Chat / WebSocket Endpoints ───────────────────────────────
 export const CHAT_API = {
   CONVERSATIONS: "/api/v1/chat/conversations",
-  MESSAGES: (id: string) => `/api/v1/chat/conversations/${id}/messages`,
-  SEND_MESSAGE: (id: string) => `/api/v1/chat/conversations/${id}/messages`,
-  WS: (token: string) => `wss://ws.soksabaygo/chat?token=${token}`,
+  HISTORY: (otherUserId: string | number) => `/api/v1/chat/history/${otherUserId}`,
+  START: "/api/v1/chat/conversation/start",
+  WS_TOKEN: "/api/v1/auth-service/ws-token",
+  MEDIA_UPLOAD: "/api/v1/media/upload",
+  SEND_MESSAGE: "/app/chat.send",
+  MESSAGES_QUEUE: "/user/queue/messages",
 };
+
+// ─── WebSocket URLs ───────────────────────────────────────────
+export const WS_URL = "http://localhost:8080/ws-soksabay";
+export const NOTIFICATION_TOPIC = (email: string) => `/topic/notifications/${email}`;
 
 // ─── Review Endpoints ─────────────────────────
 export const REVIEWS_API = {
@@ -175,7 +183,62 @@ export interface ApiBooking {
     destination: string;
     departureTime: string;
     driverName: string;
+    driverId: number;
   };
   passengerName: string;
   passengerPhone: string;
+  rejectionReason?: string;
+}
+
+// ─── Notification Types ─────────────────────────────────────────
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ApiNotificationResponse {
+  data: Notification[];
+  message: string;
+  success: boolean;
+  timestamp: string;
+}
+
+// ─── Chat Types ───────────────────────────────────────────────────
+export interface ConversationUser {
+  userId: number;
+  email: string;
+  fullName: string;
+  profileImage?: string;
+  bannerUrl?: string;
+  bio?: string;
+  role: string[];
+  ratingCount?: number;
+  lastMessageTime: string;
+  isOnline: boolean;
+  lastActiveAt: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  senderId: number;
+  senderName: string;
+  senderEmail: string;
+  recipientId: number;
+  recipientName: string;
+  recipientEmail: string;
+  content: string;
+  type: "TEXT" | "IMAGE" | "VOICE";
+  mediaUrl: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface SendMessagePayload {
+  recipientId: number;
+  content: string;
+  type: "TEXT" | "IMAGE" | "VOICE";
+  mediaUrl: string | null;
 }

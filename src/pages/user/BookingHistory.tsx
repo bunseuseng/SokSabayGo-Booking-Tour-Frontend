@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Loader2 } from "lucide-react";
+import { Calendar, MapPin, User, Loader2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { api, BOOKINGS_API } from "@/lib/api";
 import type { ApiBooking } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 const statusStyle: Record<string, string> = {
   PENDING: "bg-accent/20 text-accent-foreground",
@@ -12,6 +14,7 @@ const statusStyle: Record<string, string> = {
 const BookingHistory = () => {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get(BOOKINGS_API.MY)
@@ -50,6 +53,14 @@ const BookingHistory = () => {
                   <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle[b.status] || "bg-muted text-muted-foreground"}`}>
                     {b.status}
                   </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate("/chat", { state: { driverId: b.trip.driverId, driverName: b.trip.driverName } })}
+                  >
+                    <MessageCircle size={16} className="mr-1" />
+                    Chat
+                  </Button>
                 </div>
               </div>
             ))}
