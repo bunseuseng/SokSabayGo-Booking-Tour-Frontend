@@ -4,7 +4,7 @@ import axios from "axios";
 const BASE_URL = "https://service-provider-latest-2.onrender.com";
 
 // URL locale pour développement
-// const BASE_URL = "http://localhost:8080/api/v1";
+// const BASE_URL = "http://localhost:8080";
 
 /** Axios instance with credentials (HTTP-only JWT cookies) */
 export const api = axios.create({
@@ -73,6 +73,14 @@ export const DRIVER_TRIPS_API = {
   DELETE: (id: string | number) => `/api/v1/driver/trips/${id}`,
 };
 
+// ─── Category CRUD Endpoints ───────────────────────────
+export const CATEGORIES_API = {
+  LIST_ALL: "/api/v1/categories",
+  CREATE: "/api/v1/categories",
+  UPDATE: (id: string | number) => `/api/v1/categories/${id}`,
+  DELETE: (id: string | number) => `/api/v1/categories/${id}`,
+};
+
 // ─── Driver Booking Endpoints ─────────────────────────────────
 export const DRIVER_BOOKINGS_API = {
   REQUESTS: "/api/v1/driver/bookings/requests",
@@ -106,8 +114,9 @@ export const REVIEWS_API = {
   FOR_DRIVER: (driverId: string | number) => `/api/v1/reviews/driver/${driverId}`,
 };
 
+
 // ─── Shared Types ─────────────────────────────────────────────
-export interface ApiTrip {
+export type ApiTrip = {
   id: number;
   title: string;
   description: string;
@@ -119,9 +128,31 @@ export interface ApiTrip {
   departureTime: string;
   status: string;
   images: string[];
+  driverAvatarUrl: string;
   driverName: string;
+  categoryId: number;
   categoryName: string;
-}
+  transportationType: string;
+  vehicleCapacity: number;
+  isWholeVehicleBooking: boolean;
+  wholeVehiclePrice: number;
+  vehicleImageUrls: string[];
+  scheduleDescription: string;
+  hasTourGuide: boolean;
+  tourGuideDescription: string;
+  tourGuideImageUrl: string;
+  mealsIncluded: boolean;
+  diningDetails: string;
+  availabilitySchedule: string;
+  averageRating: number;
+  totalReviews: number;
+  itinerary: {
+    id: number;
+    name: string;
+    description: string;
+    imageUrl: string;
+  }[];
+};
 
 export interface ApiBooking {
   id: number;
