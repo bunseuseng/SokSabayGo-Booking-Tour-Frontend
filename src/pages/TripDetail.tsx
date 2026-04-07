@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { api, PUBLIC_TRIPS_API } from "@/lib/api";
-import type { ApiTrip } from "@/lib/api";
+import { api, PUBLIC_TRIPS_API, REVIEWS_API } from "@/lib/api";
+import type { ApiTrip, ApiReview } from "@/lib/api";
 
 /* ─────────────────────────────────────────
    STAR RATING DISPLAY
@@ -288,15 +288,32 @@ const VehicleGallery = ({ images }: { images: string[] }) => {
 const TripDetail = () => {
   const { id } = useParams();
   const [trip, setTrip] = useState<ApiTrip | null>(null);
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    api
-      .get(PUBLIC_TRIPS_API.DETAIL(id))
-      .then(({ data }) => setTrip(data.data || data))
-      .catch(() => setTrip(null))
-      .finally(() => setLoading(false));
+    const fetchTrip = async () => {
+      try {
+        const { data } = await api.get(PUBLIC_TRIPS_API.DETAIL(id));
+        setTrip(data.data || data);
+      } catch (err) {
+        console.error("Failed to fetch trip", err);
+        setTrip(null);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const { data } = await api.get(REVIEWS_API.FOR_TRIP(id));
+        setReviews(data.data || data || []);
+      } catch (err) {
+        console.error("Failed to fetch reviews", err);
+        setReviews([]);
+      }
+    };
+
+    Promise.all([fetchTrip(), fetchReviews()]).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
@@ -490,17 +507,75 @@ const TripDetail = () => {
 
           {/* Reviews summary */}
           <Section title="Reviews">
-            <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-6">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-foreground">{trip.averageRating?.toFixed(1)}</p>
-                <StarRating rating={trip.averageRating} size={14} />
-                <p className="text-xs text-muted-foreground mt-1">{trip.totalReviews} reviews</p>
+            <div className="bg-card border border-border rounded-2xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6">
+              <div className="text-center md:text-left">
+                <p className="text-4xl font-bold text-foreground">{trip.averageRating?.toFixed(1) || "0.0"}</p>
+                <div className="flex justify-center md:justify-start">
+                  <StarRating rating={trip.averageRating || 0} size={14} />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{trip.totalReviews || 0} reviews</p>
               </div>
-              <div className="h-16 w-px bg-border" />
+              <div className="hidden md:block h-16 w-px bg-border" />
               <p className="text-sm text-muted-foreground flex-1">
-                This trip has been reviewed by {trip.totalReviews} traveler{trip.totalReviews !== 1 ? "s" : ""}. 
-                Book your seat to leave a review after your trip.
+                {reviews.length > 0
+                  ? `Based on ${trip.totalReviews} experiences from our travelers.`
+                  : "This trip has no reviews yet. Be the first to share your experience!"}
               </p>
+            </div>
+
+            {/* Reviews List */}
+            <div className="mt-8 space-y-6">
+              {reviews.map((r, i) => (
+                <motion.div
+                  key={r.id || i}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      {(r.profileImage || r.avatarUrl || (r as any).userAvatar || (r as any).imageAvatar) ? (
+                        <img src={r.profileImage || r.avatarUrl || (r as any).userAvatar || (r as any).imageAvatar} alt={r.userName || r.fullName} className="w-10 h-10 rounded-full object-cover border border-border" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                          {(r.userName || r.fullName)?.charAt(0) || "U"}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{r.userName || r.fullName}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <StarRating rating={r.rating} size={12} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">
+                      {r.travelerType} • {r.visitDate ? new Date(r.visitDate).toLocaleDateString() : ""}
+                    </p>
+                    <h4 className="font-bold text-sm text-foreground leading-tight">{r.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-3 py-1">
+                      "{r.comment}"
+                    </p>
+                  </div>
+
+                  {r.imageUrls && r.imageUrls.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {r.imageUrls.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt="Review"
+                          className="w-24 h-24 rounded-xl object-cover border border-border flex-shrink-0"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
             </div>
           </Section>
 

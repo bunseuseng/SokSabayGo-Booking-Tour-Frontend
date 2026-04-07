@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { api, BOOKINGS_API } from "@/lib/api";
 import type { ApiBooking } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { ReviewModal } from "@/components/ReviewModal";
+import { Star } from "lucide-react";
 
 const statusStyle: Record<string, string> = {
   PENDING: "bg-accent/20 text-accent-foreground",
@@ -14,6 +16,7 @@ const statusStyle: Record<string, string> = {
 const BookingHistory = () => {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewTripId, setReviewTripId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,11 +64,31 @@ const BookingHistory = () => {
                     <MessageCircle size={16} className="mr-1" />
                     Chat
                   </Button>
+
+                  {b.status === "CONFIRMED" && (
+                    <Button
+                      size="sm"
+                      className="bg-accent hover:bg-accent/90"
+                      onClick={() => setReviewTripId(b.trip.id)}
+                    >
+                      <Star size={16} className="mr-1" />
+                      Rate & Review
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        <ReviewModal 
+          isOpen={reviewTripId !== null} 
+          onClose={() => setReviewTripId(null)}
+          tripId={reviewTripId || 0}
+          onSuccess={() => {
+            // Optional: refresh or show toast (ReviewModal already shows toast)
+          }}
+        />
       </div>
     </div>
   );
