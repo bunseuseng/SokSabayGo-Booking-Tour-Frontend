@@ -2,13 +2,16 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 import { api, AUTH_API, KEYS } from "@/lib/api";
 
 export interface User {
-  id: string;
+  id: number;
   fullName: string;
   email: string;
   contactNumber?: string;
   gender?: string;
-  avatarUrl?: string;
   profileImage?: string;
+  avatarUrl?: string;
+  bannerUrl?: string;
+  bio?: string;
+  ratingCount?: number;
   roles: string[];
 }
 
@@ -131,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(KEYS.ACCESS);
     localStorage.removeItem(KEYS.REFRESH);
     localStorage.removeItem(KEYS.HINT);
+    sessionStorage.removeItem(KEYS.ACCESS);
+    sessionStorage.removeItem(KEYS.REFRESH);
     persistUser(null);
   }, []);
 

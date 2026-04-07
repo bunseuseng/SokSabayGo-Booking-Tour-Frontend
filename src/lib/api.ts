@@ -18,11 +18,12 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(KEYS.ACCESS);
 
+  // Always enable credentials so cookies (like jwt_token) are sent even if we have a localStorage token
+  config.withCredentials = true;
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    config.withCredentials = false;
   } else {
-    config.withCredentials = true;
     delete config.headers.Authorization;
   }
 
@@ -127,7 +128,7 @@ export const NOTIFICATION_TOPIC = (email: string) => `/topic/notifications/${ema
 // ─── Review Endpoints ─────────────────────────
 export const REVIEWS_API = {
   SUBMIT: "/api/v1/reviews",
-  FOR_TRIP: "/api/v1/reviews/trip",
+  FOR_TRIP: (tripId: string | number) => `/api/v1/reviews/trip/${tripId}`,
   FOR_DRIVER: (driverId: string | number) => `/api/v1/reviews/driver/${driverId}`,
 };
 
@@ -241,4 +242,31 @@ export interface SendMessagePayload {
   content: string;
   type: "TEXT" | "IMAGE" | "VOICE";
   mediaUrl: string | null;
+}
+
+// ─── Review Types ──────────────────────────────────────────────────
+export interface ReviewSubmission {
+  tripId: number;
+  rating: number;
+  title: string;
+  comment: string;
+  travelerType: string;
+  visitDate: string;
+  imageUrls: string[];
+}
+
+export interface ApiReview {
+  id: number;
+  userId: number;
+  userName?: string;
+  fullName?: string;
+  profileImage?: string;
+  avatarUrl?: string;
+  rating: number;
+  title: string;
+  comment: string;
+  travelerType: string;
+  visitDate: string;
+  imageUrls: string[];
+  createdAt: string;
 }

@@ -26,6 +26,9 @@ const ChatPage = () => {
     startConversation
   } = useChat();
 
+  // new state variables for image review before sending
+  const [previewImage, setPreviewImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [activeConvoId, setActiveConvoId] = useState<number | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -35,7 +38,7 @@ const ChatPage = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const isCancelledRef = useRef(false);
   // Handle conversation selection
   const handleSelectConversation = async (conv: ConversationUser) => {
     await selectConversation(conv);
@@ -112,31 +115,63 @@ const ChatPage = () => {
   };
 
   // Handle file upload (image)
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 1. Just captures the file and shows it to you
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentConversation) return;
+    if (!file) return;
+
+    setPreviewImage(file);
+    setPreviewUrl(URL.createObjectURL(file));
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const confirmSendImage = async () => {
+    if (!previewImage || !currentConversation) return;
 
     try {
-      const mediaUrl = await uploadMedia(file);
+      const mediaUrl = await uploadMedia(previewImage);
+
+      // 1. Send to the server
       sendMessage({
         recipientId: currentConversation.userId,
         content: "",
         type: "IMAGE",
         mediaUrl,
       });
+
+      // 2. ADD THIS: Update your local UI immediately
+      const newMessage: ChatMessage = {
+        id: Date.now(), // Temporary ID
+        senderId: Number(user?.id),
+        senderName: user?.fullName || "You",
+        senderEmail: user?.email || "",
+        recipientId: currentConversation.userId,
+        recipientName: currentConversation.fullName,
+        recipientEmail: currentConversation.email,
+        content: "",
+        type: "IMAGE",
+        mediaUrl, // This uses the URL returned from your uploadMedia function
+        timestamp: new Date().toISOString(),
+        isRead: true,
+      };
+
+      // Push the new message into your local state
+      setMessages((prev) => [...prev, newMessage]);
+
+      // 3. Clean up the preview
+      setPreviewImage(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+
     } catch (err) {
       console.error("Failed to upload image:", err);
     }
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
-
   // ─── Voice Recording Logic ───────────────────────────────
   const startRecording = async () => {
     try {
+      isCancelledRef.current = false; // Reset the flag
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
@@ -147,40 +182,48 @@ const ChatPage = () => {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (audioBlob.size > 100) { // check if not just a click
-          const audioFile = new File([audioBlob], `voice_${Date.now()}.webm`, { type: "audio/webm" });
-          try {
-            const mediaUrl = await uploadMedia(audioFile);
-            if (currentConversation) {
-              sendMessage({
-                recipientId: currentConversation.userId,
-                content: "",
-                type: "VOICE",
-                mediaUrl,
-              });
+        if (!isCancelledRef.current) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          if (audioBlob.size > 100) {
 
-              // Add local optimistic message
-              const newMessage: ChatMessage = {
-                id: Date.now(),
-                senderId: Number(user?.id),
-                senderName: user?.fullName || "You",
-                senderEmail: user?.email || "",
-                recipientId: currentConversation.userId,
-                recipientName: currentConversation.fullName,
-                recipientEmail: currentConversation.email,
-                content: "",
-                type: "VOICE",
-                mediaUrl,
-                timestamp: new Date().toISOString(),
-                isRead: true,
-              };
-              setMessages((prev) => [...prev, newMessage]);
+
+            if (audioBlob.size > 100) { // check if not just a click
+              const audioFile = new File([audioBlob], `voice_${Date.now()}.webm`, { type: "audio/webm" });
+              try {
+                const mediaUrl = await uploadMedia(audioFile);
+                if (currentConversation) {
+                  sendMessage({
+                    recipientId: currentConversation.userId,
+                    content: "",
+                    type: "VOICE",
+                    mediaUrl,
+                  });
+
+                  // Add local optimistic message
+                  const newMessage: ChatMessage = {
+                    id: Date.now(),
+                    senderId: Number(user?.id),
+                    senderName: user?.fullName || "You",
+                    senderEmail: user?.email || "",
+                    recipientId: currentConversation.userId,
+                    recipientName: currentConversation.fullName,
+                    recipientEmail: currentConversation.email,
+                    content: "",
+                    type: "VOICE",
+                    mediaUrl,
+                    timestamp: new Date().toISOString(),
+                    isRead: true,
+                  };
+                  setMessages((prev) => [...prev, newMessage]);
+                }
+              } catch (err) {
+                console.error("Failed to upload voice message:", err);
+              }
             }
-          } catch (err) {
-            console.error("Failed to upload voice message:", err);
           }
+
         }
+
         // stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
@@ -206,6 +249,7 @@ const ChatPage = () => {
 
   const cancelRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      isCancelledRef.current = true;
       audioChunksRef.current = []; // clear chunks so onstop does nothing
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -393,9 +437,46 @@ const ChatPage = () => {
       </div>
 
       {/* Input */}
+      {/* Input */}
       <div className="bg-card border-t border-border p-3 shrink-0">
         <AnimatePresence mode="wait">
-          {isRecording ? (
+          {/* 1. PREVIEW LAYER (Review Image before sending) */}
+          {previewUrl ? (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl"
+            >
+              <div className="relative h-12 w-12 rounded-lg overflow-hidden border bg-background">
+                <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium">Image selected</p>
+                <p className="text-[10px] text-muted-foreground">Click send to confirm</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPreviewUrl(null);
+                  setPreviewImage(null);
+                }}
+                className="text-destructive hover:bg-destructive/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={confirmSendImage}
+                className="bg-primary text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
+              >
+                <Send size={18} />
+              </Button>
+            </motion.div>
+          ) : isRecording ? (
+            /* 2. RECORDING LAYER (Voice Controls) */
             <motion.div
               key="recording"
               initial={{ opacity: 0, y: 10 }}
@@ -406,16 +487,26 @@ const ChatPage = () => {
               <div className="flex items-center gap-2 flex-1 px-2">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium tabular-nums">{formatDuration(recordingTime)}</span>
-                <span className="text-xs text-muted-foreground ml-2">Recording voice...</span>
+                <span className="text-xs text-muted-foreground ml-2">Recording...</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={cancelRecording} className="text-destructive hover:bg-destructive/10">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelRecording} // Triggering your cancel function
+                className="text-destructive hover:bg-destructive/10"
+              >
                 Cancel
               </Button>
-              <Button size="sm" onClick={stopRecording} className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center">
+              <Button
+                size="sm"
+                onClick={stopRecording} // Triggering your stop/send function
+                className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
+              >
                 <Send size={18} />
               </Button>
             </motion.div>
           ) : (
+            /* 3. STANDARD LAYER (Keyboard & Upload) */
             <motion.div
               key="standard"
               initial={{ opacity: 0, y: 10 }}
@@ -430,11 +521,7 @@ const ChatPage = () => {
                 onChange={handleImageUpload}
                 className="hidden"
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
                 <ImageIcon size={18} />
               </Button>
               <Input

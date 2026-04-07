@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Shield, DollarSign, TrendingUp, MapPin, User, Loader2 } from "lucide-react";
+import { Search, Shield, DollarSign, TrendingUp, MapPin, User, Loader2, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StaggerContainer, StaggerItem, FadeInView } from "@/components/AnimationUtils";
@@ -106,20 +106,57 @@ const Index = () => {
                 <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
                   <Link to={`/trip/${trip.id}`} className="group block bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-border">
                     <div className="relative overflow-hidden aspect-[4/3]">
-                      <img src={trip.images?.[0] || "/placeholder.svg"} alt={trip.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img
+                        src={trip.images?.[0] || "/placeholder.svg"}
+                        alt={trip.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                       <div className="absolute top-3 right-3 bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold shadow">
                         ${trip.pricePerSeat}
                       </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors">{trip.title}</h3>
-                      <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
-                        <MapPin size={12} />
-                        <span>{trip.origin} → {trip.destination}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-semibold text-card-foreground group-hover:text-primary transition-colors truncate">
+                          {trip.title}
+                        </h3>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-muted-foreground">{trip.availableSeats} seats left</span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground"><User size={12} />{trip.driverName}</span>
+                      <div className="flex items-center gap-1 mb-2">
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={14}
+                              // If the star index is less than or equal to rating, fill it yellow
+                              // Otherwise, make it transparent/hollow
+                              className={`${star <= Math.round(trip.averageRating)
+                                ? "text-yellow-500 fill-yellow-500"
+                                : "text-muted-foreground/30"
+                                }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="ml-1 text-xs font-bold text-foreground">
+                          {trip.averageRating > 0 ? trip.averageRating.toFixed(1) : "New"}
+                        </span>
+                        <span className="text-muted-foreground text-[10px]">
+                          ({trip.totalReviews || 0})
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-muted-foreground text-xs mb-3">
+                        <MapPin size={12} className="shrink-0" />
+                        <span className="truncate">{trip.origin} → {trip.destination}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                        <span className="text-[11px] font-medium px-2 py-0.5 bg-secondary rounded-full text-secondary-foreground">
+                          {trip.availableSeats} seats left
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <User size={12} />
+                          {trip.driverName}
+                        </span>
                       </div>
                     </div>
                   </Link>
