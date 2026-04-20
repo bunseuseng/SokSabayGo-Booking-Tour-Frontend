@@ -132,6 +132,18 @@ export const REVIEWS_API = {
   FOR_DRIVER: (driverId: string | number) => `/api/v1/reviews/driver/${driverId}`,
 };
 
+// ─── Admin Dashboard Endpoints ─────────────────────────────────────────────
+export const ADMIN_MANAGEMENT_API = {
+  // Stats for the dashboard cards
+  STATS_SUMMARY: "/api/v1/admin/stats/summary",
+  LIST_USERS: "/api/v1/admin/users", 
+  // // Data for the chart
+  // REGISTRATION_STATS: "/api/v1/admin/stats/registrations",
+  // // Get all users (searchable/paginated)
+  // USER_LIST: "/api/v1/admin/users",
+  // // Update user status (block/unblock)
+  // UPDATE_USER_STATUS: (id: string | number) => `/api/v1/admin/users/${id}/status`,
+};
 
 // ─── Shared Types ─────────────────────────────────────────────
 export type ApiTrip = {

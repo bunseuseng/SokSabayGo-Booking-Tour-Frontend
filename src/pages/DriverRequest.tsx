@@ -14,6 +14,7 @@ interface DriverApplication {
   licenseNumber: string;
   vehicleType: string;
   idCardImageUrl: string;
+  idCardPublicId: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   rejectionReason: string | null;
   reviewedAt: string | null;
@@ -174,6 +175,11 @@ const DriverRequest = () => {
                 </label>
               )}
             </div>
+          </div>
+              <Label className="mb-2 block"> ID Card Public ID</Label>
+              <Input value={idCardPublicId} readOnly className="h-12 bg-muted/50 cursor-not-allowed" placeholder="Public ID from media service" />
+          <div>
+
           </div>
           <Button type="submit" disabled={loading || uploading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base">
             {loading ? "Submitting..." : isReapply ? (
