@@ -132,11 +132,10 @@ export const REVIEWS_API = {
 };
 
 // ─── Admin Dashboard Endpoints ─────────────────────────────────────────────
-// ─── Admin Management Endpoints (Add these) ───────────────────────────
 export const ADMIN_MANAGEMENT_API = {
   // Stats for the dashboard cards
   STATS_SUMMARY: "/api/v1/admin/stats/summary",
-  LIST_USERS: "/api/v1/admin/stats/users", 
+  LIST_USERS: "/api/v1/admin/users", 
   // // Data for the chart
   // REGISTRATION_STATS: "/api/v1/admin/stats/registrations",
   // // Get all users (searchable/paginated)
