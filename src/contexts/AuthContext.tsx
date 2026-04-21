@@ -52,8 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchMe = useCallback(async (token?: string) => {
     try {
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const res = await api.get(AUTH_API.ME, config);
+      // const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await api.get(AUTH_API.ME);
+      // const res = await api.get(AUTH_API.ME, config);
       persistUser(res.data);
     } catch (err) {
       persistUser(null);
@@ -64,12 +65,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     try {
+      // 🔥 Clear old tokens FIRST (fix for your bug)
+      localStorage.removeItem(KEYS.ACCESS);
+      sessionStorage.removeItem(KEYS.ACCESS);
+
       const res = await api.post(AUTH_API.LOGIN, { email, password });
+
       const accessToken = res.data.data.accessToken;
+
+      // Save new token
       localStorage.setItem(KEYS.ACCESS, accessToken);
       sessionStorage.setItem(KEYS.ACCESS, accessToken);
 
-      await fetchMe(accessToken);
+      // ⚠️ Also apply earlier fix: don't pass token
+      await fetchMe();
+
       return true;
     } catch (err) {
       console.error("Login failed", err);
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchMe]);
 
+  console.log("TOKEN USED:", localStorage.getItem(KEYS.ACCESS));
   const loginWithGoogle = useCallback(() => {
     localStorage.setItem(KEYS.HINT, "true");
     localStorage.removeItem(KEYS.ACCESS);
@@ -106,7 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(KEYS.ACCESS, accessToken);
         sessionStorage.setItem(KEYS.ACCESS, accessToken);
       }
-      await fetchMe(accessToken);
+      // await fetchMe(accessToken);
+      await fetchMe();
       return true;
     } catch (err: any) {
       console.error("Register failed", err);
