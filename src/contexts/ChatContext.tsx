@@ -38,8 +38,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const getWsToken = useCallback(async (): Promise<string | null> => {
     let accessToken = localStorage.getItem(KEYS.ACCESS);
 
-    // If the token is missing from localStorage but the user is logged in (e.g. via HTTP-only Google OAuth cookies),
-    // we must fetch a fresh token directly from the backend to ensure the WebSocket can securely authenticate.
     if (!accessToken) {
       try {
         console.log("🛠️ Token missing from localStorage. Fetching fresh token from backend...");
@@ -61,20 +59,33 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const res = await api.get(CHAT_API.CONVERSATIONS);
       if (res.data) {
         // Normalize conversation data - handle different field names from backend
-        const normalizedConversations = (Array.isArray(res.data) ? res.data : res.data.data || []).map((conv: any) => ({
-          userId: conv.userId || conv.id,
-          email: conv.email || "",
-          fullName: conv.fullName || conv.name || "Unknown",
-          profileImage: conv.profileImage || conv.avatarUrl || conv.avatar,
-          bannerUrl: conv.bannerUrl || conv.banner,
-          bio: conv.bio || conv.bio,
-          role: conv.role || [],
-          ratingCount: conv.ratingCount || conv.ratings,
-          lastMessageTime: conv.lastMessageTime || conv.lastMessageAt || conv.lastMessage?.timestamp || new Date().toISOString(),
-          isOnline: conv.isOnline === true || conv.isOnline === "true" || conv.online === true,
-          lastActiveAt: conv.lastActiveAt || conv.lastSeenAt || conv.lastActive || conv.lastSeen,
-        }));
+        const rawList = Array.isArray(res.data) ? res.data : res.data.data || [];
+        
+        // Sum up unread counts if the backend provides them
+        let totalUnread = 0;
+        
+        const normalizedConversations = rawList.map((conv: any) => {
+          const uCount = conv.unreadCount || conv.unreadMessages || 0;
+          totalUnread += Number(uCount);
+          
+          return {
+            userId: conv.userId || conv.id,
+            email: conv.email || "",
+            fullName: conv.fullName || conv.name || "Unknown",
+            profileImage: conv.profileImage || conv.avatarUrl || conv.avatar,
+            bannerUrl: conv.bannerUrl || conv.banner,
+            bio: conv.bio || conv.bio,
+            role: conv.role || [],
+            ratingCount: conv.ratingCount || conv.ratings,
+            lastMessageTime: conv.lastMessageTime || conv.lastMessageAt || conv.lastMessage?.timestamp || new Date().toISOString(),
+            isOnline: conv.isOnline === true || conv.isOnline === "true" || conv.online === true,
+            lastActiveAt: conv.lastActiveAt || conv.lastSeenAt || conv.lastActive || conv.lastSeen,
+            unreadCount: uCount,
+          };
+        });
+        
         setConversations(normalizedConversations);
+        setUnreadCount(totalUnread);
       }
     } catch (err) {
       console.error("Failed to fetch conversations:", err);
@@ -157,6 +168,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             lastMessageTime: new Date().toISOString(),
             isOnline: false,
             lastActiveAt: conv.lastActiveAt,
+            unreadCount: conv.unreadCount || 0,
           };
           await selectConversation(newConv);
           return;
@@ -178,6 +190,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         lastMessageTime: new Date().toISOString(),
         isOnline: false,
         lastActiveAt: undefined,
+        unreadCount: 0,
       };
 
       // Add to conversations if not already there
@@ -306,7 +319,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                     const conv = prev.find((c) => c.userId === message.senderId || c.userId === message.recipientId);
                     if (conv) {
                       return [
-                        { ...conv, lastMessageTime: message.timestamp, isOnline: true },
+                        { 
+                          ...conv, 
+                          lastMessageTime: message.timestamp, 
+                          isOnline: true,
+                          unreadCount: isCurrentConvo ? 0 : (conv.unreadCount || 0) + 1
+                        },
                         ...prev.filter((c) => c.userId !== conv.userId),
                       ];
                     }

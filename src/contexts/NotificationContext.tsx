@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 import { Client, IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { toast } from "react-toastify";
-import { api, NOTIFICATIONS_API, WS_URL, NOTIFICATION_TOPIC, Notification, KEYS } from "@/lib/api";
+import { api, NOTIFICATIONS_API, WS_URL, NOTIFICATION_TOPIC, Notification, KEYS, AUTH_API } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface NotificationContextType {
@@ -29,9 +29,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!user?.email) return;
     try {
       const res = await api.get(NOTIFICATIONS_API.LIST);
-      if (res.data.data) {
-        setNotifications(res.data.data);
-      }
+      // Handle both { data: [...] } and directly returning [...]
+      const notificationData = Array.isArray(res.data) ? res.data : res.data.data || [];
+      setNotifications(notificationData);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     } finally {
@@ -79,64 +79,109 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [notifications]);
 
+  // Get WebSocket token - shared logic with ChatContext
+  const getWsToken = useCallback(async (): Promise<string | null> => {
+    let accessToken = localStorage.getItem(KEYS.ACCESS);
+
+    if (!accessToken) {
+      try {
+        console.log("🛠️ Notification token missing. Fetching fresh token...");
+        const res = await api.get(AUTH_API.WS_TOKEN);
+        accessToken = res.data?.data?.accessToken || res.data?.accessToken || null;
+        if (accessToken) {
+          localStorage.setItem(KEYS.ACCESS, accessToken);
+        }
+      } catch (err) {
+        console.error("Failed to fetch fresh ws-token for notifications:", err);
+      }
+    }
+    return accessToken;
+  }, []);
+
   // Setup WebSocket connection for real-time notifications
   useEffect(() => {
     if (!user?.email) return;
 
-    const token = localStorage.getItem(KEYS.ACCESS);
-    if (!token) return;
+    let isMounted = true;
+    let activeClient: Client | null = null;
 
-    const client = new Client({
-      webSocketFactory: () =>
-        new SockJS(WS_URL),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      reconnectDelay: 5000,
-      onConnect: () => {
-        console.log("Notification WebSocket connected");
-        client.subscribe(
-          NOTIFICATION_TOPIC(user.email!),
-          (message: IMessage) => {
+    const connectNotifications = async () => {
+      try {
+        const token = await getWsToken();
+        if (!token || !isMounted) return;
+
+        console.log("🛠️ Setting up Notification WebSocket...");
+        activeClient = new Client({
+          webSocketFactory: () => new SockJS(WS_URL),
+          connectHeaders: {
+            Authorization: `Bearer ${token}`,
+          },
+          reconnectDelay: 5000,
+          heartbeatIncoming: 10000,
+          heartbeatOutgoing: 10000,
+          beforeConnect: async () => {
             try {
-              const notification: Notification = JSON.parse(message.body);
-              console.log("New notification received:", notification);
-
-              // Show toast notification
-              toast.info(notification.message, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-              });
-
-              setNotifications((prev) => [notification, ...prev]);
+              const freshToken = await getWsToken();
+              if (freshToken && activeClient) {
+                activeClient.connectHeaders = { Authorization: `Bearer ${freshToken}` };
+              }
             } catch (err) {
-              console.error("Failed to parse notification:", err);
+              console.warn("Failed to refresh token in Notification beforeConnect", err);
             }
-          }
-        );
-      },
-      onStompError: (frame) => {
-        console.warn("STOMP error for notifications (endpoint may not be available):", frame.headers["message"]);
-      },
-      onWebSocketError: (event) => {
-        console.warn("WebSocket error for notifications:", event);
-      },
-    });
+          },
+          onConnect: () => {
+            console.log("🟢 Notification WebSocket connected");
+            if (!activeClient) return;
 
-    client.activate();
-    setStompClient(client);
+            activeClient.subscribe(
+              NOTIFICATION_TOPIC(user.email!),
+              (message: IMessage) => {
+                try {
+                  const notification: Notification = JSON.parse(message.body);
+                  console.log("New notification received:", notification);
 
-    return () => {
-      if (client) {
-        client.deactivate();
+                  // Show toast notification
+                  toast.info(notification.message, {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "light",
+                  });
+
+                  setNotifications((prev) => [notification, ...prev]);
+                } catch (err) {
+                  console.error("Failed to parse notification:", err);
+                }
+              }
+            );
+          },
+          onStompError: (frame) => {
+            console.warn("🔴 STOMP error for notifications:", frame.headers["message"]);
+          },
+          onWebSocketError: (event) => {
+            console.warn("🔴 WebSocket error for notifications:", event);
+          },
+        });
+
+        activeClient.activate();
+        setStompClient(activeClient);
+      } catch (err) {
+        console.error("❌ Failed to initialize Notification WebSocket:", err);
       }
     };
-  }, [user?.email]);
+
+    connectNotifications();
+
+    return () => {
+      isMounted = false;
+      if (activeClient) {
+        activeClient.deactivate();
+      }
+    };
+  }, [user?.email, getWsToken]);
 
   // Initial fetch
   useEffect(() => {

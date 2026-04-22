@@ -530,6 +530,7 @@ const ChatPage = () => {
                 onChange={(e) => setNewMsg(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 className="h-11"
+                maxLength={255}
               />
               {newMsg.trim() ? (
                 <Button onClick={handleSend} className="h-11 px-4">
