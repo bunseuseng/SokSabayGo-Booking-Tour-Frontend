@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { LogIn, UserPlus } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 interface AuthGuardDialogProps {
   open: boolean;
@@ -14,7 +15,7 @@ interface AuthGuardDialogProps {
 }
 
 const AuthGuardDialog = ({ open, onOpenChange, message }: AuthGuardDialogProps) => {
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("register");
   const [form, setForm] = useState({ name: "", email: "", contactNumber: "", gender: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,11 @@ const AuthGuardDialog = ({ open, onOpenChange, message }: AuthGuardDialogProps) 
       }
     }
     setLoading(false);
+  };
+
+  const handleGoogleLogin = () => {
+    loginWithGoogle();
+    onOpenChange(false);
   };
 
   return (
@@ -77,17 +83,36 @@ const AuthGuardDialog = ({ open, onOpenChange, message }: AuthGuardDialogProps) 
           <Button type="submit" disabled={loading} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90">
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
           </Button>
-          <p className="text-center text-sm text-muted-foreground">
-            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <button type="button" onClick={() => setMode(mode === "login" ? "register" : "login")} className="text-primary font-medium hover:underline">
-              {mode === "login" ? "Sign up" : "Sign in"}
-            </button>
-          </p>
         </form>
 
-        {/* <p className="text-xs text-muted-foreground text-center mt-1">
-          Demo: admin@soksabay.com / admin123
-        </p> */}
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-1">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        {/* Google OAuth */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleLogin}
+          className="w-full h-11 flex items-center justify-center gap-2"
+        >
+          <FcGoogle className="w-5 h-5" />
+          Continue with Google
+        </Button>
+
+        <p className="text-center text-sm text-muted-foreground mt-1">
+          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => setMode(mode === "login" ? "register" : "login")}
+            className="text-primary font-medium hover:underline"
+          >
+            {mode === "login" ? "Sign up" : "Sign in"}
+          </button>
+        </p>
       </DialogContent>
     </Dialog>
   );
