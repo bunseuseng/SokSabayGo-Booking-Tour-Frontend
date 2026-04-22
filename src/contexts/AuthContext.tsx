@@ -52,9 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchMe = useCallback(async (token?: string) => {
     try {
-      // const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const res = await api.get(AUTH_API.ME);
-      // const res = await api.get(AUTH_API.ME, config);
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await api.get(AUTH_API.ME, config);
       persistUser(res.data);
     } catch (err) {
       persistUser(null);

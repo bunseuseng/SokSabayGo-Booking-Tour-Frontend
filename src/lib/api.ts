@@ -228,7 +228,8 @@ export interface ConversationUser {
   ratingCount?: number;
   lastMessageTime: string;
   isOnline: boolean;
-  lastActiveAt: string;
+  lastActiveAt?: string;
+  unreadCount?: number;
 }
 
 export interface ChatMessage {

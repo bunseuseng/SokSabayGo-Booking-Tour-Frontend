@@ -269,6 +269,7 @@ const DriverTours = () => {
                       value={form.title}
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       placeholder="e.g. Luxury Private Tour to Angkor Wat"
+                      maxLength={255}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -278,6 +279,7 @@ const DriverTours = () => {
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       placeholder="Write a detailed description of your trip..."
                       rows={4}
+                      maxLength={1000}
                     />
                   </div>
                   <div>
@@ -286,6 +288,7 @@ const DriverTours = () => {
                       value={form.origin}
                       onChange={(e) => setForm({ ...form, origin: e.target.value })}
                       placeholder="Phnom Penh"
+                      maxLength={255}
                     />
                   </div>
                   <div>
@@ -294,6 +297,7 @@ const DriverTours = () => {
                       value={form.destination}
                       onChange={(e) => setForm({ ...form, destination: e.target.value })}
                       placeholder="Siem Reap"
+                      maxLength={255}
                     />
                   </div>
                   <div>
@@ -356,6 +360,7 @@ const DriverTours = () => {
                       value={form.transportationType}
                       onChange={(e) => setForm({ ...form, transportationType: e.target.value })}
                       placeholder="Lexus RX300 / Mini Van"
+                      maxLength={255}
                     />
                   </div>
                   <div>
@@ -445,6 +450,7 @@ const DriverTours = () => {
                     onChange={(e) => setForm({ ...form, scheduleDescription: e.target.value })}
                     placeholder="e.g. Departs every morning at 7AM, returns by 6PM..."
                     rows={3}
+                    maxLength={255}
                   />
                 </div>
                 <div>
@@ -454,6 +460,7 @@ const DriverTours = () => {
                     onChange={(e) => setForm({ ...form, availabilitySchedule: e.target.value })}
                     placeholder="e.g. Available Mon–Sat, closed on public holidays..."
                     rows={3}
+                    maxLength={255}
                   />
                 </div>
               </section>
@@ -529,6 +536,7 @@ const DriverTours = () => {
                       onChange={(e) => setForm({ ...form, diningDetails: e.target.value })}
                       placeholder="e.g. Lunch at a local restaurant included, vegetarian options available..."
                       rows={3}
+                      maxLength={255}
                     />
                   </div>
                 )}
@@ -567,6 +575,7 @@ const DriverTours = () => {
                           n[idx].name = e.target.value;
                           setItinerary(n);
                         }}
+                        maxLength={255}
                       />
                       <Textarea
                         placeholder="Description of this stop..."
