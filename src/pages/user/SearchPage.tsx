@@ -14,6 +14,8 @@ const SearchPage = () => {
   const [date, setDate] = useState("");
   const [trips, setTrips] = useState<ApiTrip[]>([]);
   const [loading, setLoading] = useState(true);
+  // DebouncedQuery
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
 
   const fetchTrips = () => {
     setLoading(true);
@@ -31,7 +33,7 @@ const SearchPage = () => {
 
   const handleSearch = () => fetchTrips();
 
-  const filtered = query
+  const filtered = debouncedQuery
     ? trips.filter((t) =>
       t.title.toLowerCase().includes(query.toLowerCase()) ||
       t.origin.toLowerCase().includes(query.toLowerCase()) ||

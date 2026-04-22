@@ -1,10 +1,7 @@
 import axios from "axios";
 
-// URL server backend (déployé sur Render)
 // const BASE_URL = "https://service-provider-latest-2.onrender.com";
 
-// URL locale pour développement
-// const BASE_URL = "http://localhost:8080";
 const BASE_URL = "http://localhost:8080";
 
 /** Axios instance with credentials (HTTP-only JWT cookies) */

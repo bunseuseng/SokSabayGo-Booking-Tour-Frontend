@@ -85,9 +85,9 @@ const AuthGuardDialog = ({ open, onOpenChange, message }: AuthGuardDialogProps) 
           </p>
         </form>
 
-        <p className="text-xs text-muted-foreground text-center mt-1">
+        {/* <p className="text-xs text-muted-foreground text-center mt-1">
           Demo: admin@soksabay.com / admin123
-        </p>
+        </p> */}
       </DialogContent>
     </Dialog>
   );

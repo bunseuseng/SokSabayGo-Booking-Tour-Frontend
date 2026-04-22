@@ -384,7 +384,7 @@ const AdminDashboard = () => {
                             onClick={async () => {
                               const newStatus = user.status === "ACTIVE" ? "BANNED" : "ACTIVE";
                               try {
-                                // 📌 Wire this up when your backend has the endpoint:
+                                // 📌 Wire this up when backend has the endpoint:
                                 // PATCH /api/v1/admin/users/{id}/status  body: { status }
                                 await api.patch(`/api/v1/admin/users/${user.id}/status`, { status: newStatus });
                                 setUsers((prev) =>

@@ -44,12 +44,17 @@ const userItemsWithoutBadge = [
 
 const driverItems = [
   { title: "Home", url: "/", icon: Home },
+  { title: "Search Tours", url: "/search", icon: Search },
+  { title: "My Bookings", url: "/bookings", icon: CalendarDays },
   { title: "Driver Panel", url: "/driver", icon: LayoutDashboard },
   { title: "Messages", url: "/chat", icon: MessageCircle, chatBadge: true },
   { title: "Notifications", url: "/notifications", icon: Bell },
 ];
 
 const adminItems = [
+  { title: "Home", url: "/", icon: Home },
+  { title: "Search Tours", url: "/search", icon: Search },
+  { title: "My Bookings", url: "/bookings", icon: CalendarDays },
   { title: "Admin Panel", url: "/admin", icon: LayoutDashboard },
 ];
 

@@ -52,7 +52,11 @@ const AdminLayout = () => {
           <div className="p-2 border-t border-border space-y-1">
             <NavLink to="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
               <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 overflow-hidden">
-                {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+                {user?.avatarUrl || user?.profileImage ? (
+                  <img src={user.avatarUrl ?? user.profileImage} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initials
+                )}
               </div>
               <span className="truncate">{user?.fullName || "Profile"}</span>
             </NavLink>
