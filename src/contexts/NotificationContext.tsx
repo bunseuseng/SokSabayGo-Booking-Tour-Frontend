@@ -88,7 +88,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS(`${WS_URL}?access_token=${encodeURIComponent(token)}`),
+        new SockJS(WS_URL),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },

@@ -233,7 +233,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         console.log("🛠️ Creating new STOMP Client object...");
 
         activeClient = new Client({
-          webSocketFactory: () => new SockJS(`${WS_URL}?access_token=${encodeURIComponent(token)}`),
+          webSocketFactory: () => new SockJS(WS_URL),
           connectHeaders: {
             Authorization: `Bearer ${token}`,
           },
