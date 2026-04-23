@@ -50,6 +50,7 @@ const Footer = () => (
           <p>© 2026 Soksabay Go. All rights reserved.</p>
           {/* Keep this link here as well just to be safe for the Google Bot */}
           <Link to="/privacy" className="hover:text-background/80 underline mt-1 inline-block">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-background transition">Terms of Service</Link>
       </div>
     </div>
   </footer>
