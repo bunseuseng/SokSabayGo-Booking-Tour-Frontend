@@ -22,7 +22,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
 import NotFound from "./pages/NotFound";
-
+import PrivacyPage from "./pages/PrivacyPage";
 // User pages
 import NotificationsPage from "./pages/user/NotificationsPage";
 import ProfilePage from "./pages/user/ProfilePage";
@@ -60,6 +60,7 @@ const AnimatedRoutes = () => {
 
         {/* ── Public routes ── */}
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+        <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
         <Route path="/search" element={<PageTransition><SearchPage /></PageTransition>} />
         <Route path="/trip/:id" element={<PageTransition><TripDetail /></PageTransition>} />
         <Route path="/driver-request" element={<PageTransition><DriverRequest /></PageTransition>} />

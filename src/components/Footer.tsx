@@ -23,7 +23,8 @@ const Footer = () => (
           <h4 className="font-semibold mb-4">Company</h4>
           <div className="flex flex-col gap-2 text-sm text-background/60">
             <span>About Us</span>
-            <span>Privacy Policy</span>
+            {/* CHANGED: This is now a clickable Link for Google Verification */}
+            <Link to="/privacy" className="hover:text-background transition">Privacy Policy</Link>
             <span>Terms of Service</span>
           </div>
         </div>
@@ -46,7 +47,9 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-10 pt-6 border-t border-background/10 text-center text-sm text-background/40">
-        © 2026 Soksabay Go. All rights reserved.
+          <p>© 2026 Soksabay Go. All rights reserved.</p>
+          {/* Keep this link here as well just to be safe for the Google Bot */}
+          <Link to="/privacy" className="hover:text-background/80 underline mt-1 inline-block">Privacy Policy</Link>
       </div>
     </div>
   </footer>
