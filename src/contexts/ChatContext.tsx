@@ -133,15 +133,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Send message via WebSocket
   const sendMessage = useCallback((payload: SendMessagePayload) => {
     const client = stompClientRef.current;
-    console.log("📤 Attempting to send message:", payload);
-    console.log("📡 WebSocket connected:", client?.connected);
+    // console.log("📤 Attempting to send message:", payload);
+    // console.log("📡 WebSocket connected:", client?.connected);
     if (client && client.connected) {
-      console.log("✅ Publishing to:", CHAT_API.SEND_MESSAGE);
+      // console.log("✅ Publishing to:", CHAT_API.SEND_MESSAGE);
       client.publish({
         destination: CHAT_API.SEND_MESSAGE,
         body: JSON.stringify(payload),
       });
-      console.log("✅ Message published successfully");
+      // console.log("✅ Message published successfully");
     } else {
       console.error("❌ WebSocket not connected", { clientAvailable: !!client });
     }
@@ -230,9 +230,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const connectChat = async () => {
       try {
-        console.log("🛠️ Calling getWsToken...");
+        // console.log("🛠️ Calling getWsToken...");
         const token = await getWsToken();
-        console.log("🛠️ getWsToken returned length:", token ? token.length : "NULL");
+        // console.log("🛠️ getWsToken returned length:", token ? token.length : "NULL");
         if (!token) {
           console.error("❌ Token is missing! Aborting connect.");
           return;
@@ -243,7 +243,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
 
         setWsToken(token);
-        console.log("🛠️ Creating new STOMP Client object...");
+        // console.log("🛠️ Creating new STOMP Client object...");
 
         activeClient = new Client({
           webSocketFactory: () => new SockJS(WS_URL),
@@ -271,7 +271,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               console.log("📨 Received message frame:", frame.body);
               try {
                 const message: ChatMessage = JSON.parse(frame.body);
-                console.log("✅ Parsed message:", message);
+                // console.log("✅ Parsed message:", message);
 
                 // Don't count own messages as unread // but check senderId vs explicitly logged in user id
                 const currentUserId = Number(user?.id);
@@ -350,7 +350,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           stompClientRef.current = activeClient;
           console.log("✅ stompClientRef successfully populated:", !!stompClientRef.current);
         } else {
-          console.log("❌ isMounted was false before activate()!");
+          // console.log("❌ isMounted was false before activate()!");
         }
       } catch (err) {
         console.error("❌ Failed to initialize Chat WebSocket because getWsToken crashed:", err);
@@ -360,14 +360,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     connectChat();
 
     return () => {
-      console.log("🛠️ ChatContext useEffect CLEANUP RUNNING!");
+      // console.log("🛠️ ChatContext useEffect CLEANUP RUNNING!");
       isMounted = false;
       if (activeClient) {
-        console.log("🛠️ Deactivating active client...");
+        // console.log("🛠️ Deactivating active client...");
         activeClient.deactivate();
       }
       if (stompClientRef.current === activeClient) {
-        console.log("🛠️ Wiping stompClientRef.current to null...");
+        // console.log("🛠️ Wiping stompClientRef.current to null...");
         stompClientRef.current = null;
       }
     };
