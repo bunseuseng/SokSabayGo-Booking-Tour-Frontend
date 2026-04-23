@@ -1,13 +1,13 @@
 import { Outlet, NavLink, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Map, CalendarDays, Car, Users, Star, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Map, CalendarDays, MessageCircle, Star, ArrowLeft } from "lucide-react";
 
 const navItems = [
   { to: "/driver", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/driver/tours", icon: Map, label: "Tours" },
   { to: "/driver/bookings", icon: CalendarDays, label: "Bookings" },
   { to: "/driver/reviews", icon: Star, label: "Reviews" },
-  { to: "/chat", icon: Users, label: "Chat" },
+  { to: "/driver/chat", icon: MessageCircle, label: "Chat" },
 ];
 
 const DriverLayout = () => {
@@ -16,8 +16,9 @@ const DriverLayout = () => {
 
   if (!isDriver) return <Navigate to="/" replace />;
   if (location.pathname === "/driver/dashboard") {
-  return <Navigate to="/driver" replace />;
-}
+    return <Navigate to="/driver" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">

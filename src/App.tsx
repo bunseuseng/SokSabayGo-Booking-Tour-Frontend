@@ -145,6 +145,8 @@ const App = () => (
                   <Route path="tours" element={<DriverTours />} />
                   <Route path="bookings" element={<DriverBookings />} />
                   <Route path="reviews" element={<DriverReviews />} />
+                  {/* Chat lives inside driver layout so it keeps the driver sidebar */}
+                  <Route path="chat" element={<ChatPage />} />
                 </Route>
 
                 {/* Main site routes — with sidebar + conditional footer */}
