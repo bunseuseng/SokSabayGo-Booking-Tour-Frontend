@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # The Frontend we just dockerized
+  frontend:
+    # We are pulling the pre-built image from Docker Hub now
+    image: bongchang/soksabay-frontend:latest
+    container_name: soksabay-frontend
+    ports:
+      - "3000:80"
+    restart: always
+    # If your frontend needs to talk to the backend container directly 
+    # instead of through the public internet, you link them in the same network
+    networks:
+      - soksabay-network
+
+  # Your Spring Boot Backend
+  backend:
+    image: bongchang/booking-tour-app:latest
+    container_name: soksabay-backend
+    ports:
+      - "8080:8080" # Maps Port 8080 on your host to Port 8080 in the container
+    # Connecting to your external PostgreSQL Group Account database
+    # For security, we use Portainer Environment Variables instead of hardcoding the passwords here!
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+    restart: always
+    networks:
+      - soksabay-network
+
+  # Your Database (if you host your own DB instead of Neon DB)
+  # db:
+  #   image: postgres:15
+  #   container_name: soksabay-db
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=soksabay
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - soksabay-network
+
+networks:
+  soksabay-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

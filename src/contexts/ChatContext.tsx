@@ -60,14 +60,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (res.data) {
         // Normalize conversation data - handle different field names from backend
         const rawList = Array.isArray(res.data) ? res.data : res.data.data || [];
-        
+
         // Sum up unread counts if the backend provides them
         let totalUnread = 0;
-        
+
         const normalizedConversations = rawList.map((conv: any) => {
           const uCount = conv.unreadCount || conv.unreadMessages || 0;
           totalUnread += Number(uCount);
-          
+
           return {
             userId: conv.userId || conv.id,
             email: conv.email || "",
@@ -83,7 +83,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             unreadCount: uCount,
           };
         });
-        
+
         setConversations(normalizedConversations);
         setUnreadCount(totalUnread);
       }
@@ -319,9 +319,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                     const conv = prev.find((c) => c.userId === message.senderId || c.userId === message.recipientId);
                     if (conv) {
                       return [
-                        { 
-                          ...conv, 
-                          lastMessageTime: message.timestamp, 
+                        {
+                          ...conv,
+                          lastMessageTime: message.timestamp,
                           isOnline: true,
                           unreadCount: isCurrentConvo ? 0 : (conv.unreadCount || 0) + 1
                         },

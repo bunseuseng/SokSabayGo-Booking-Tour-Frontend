@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://service-provider-latest-2.onrender.com";
-
+const BASE_URL = import.meta.env.VITE_API_URL || "https://service-provider-latest-2.onrender.com";
 // const BASE_URL = "http://localhost:8080";
 
 /** Axios instance with credentials (HTTP-only JWT cookies) */
@@ -135,7 +134,7 @@ export const REVIEWS_API = {
 export const ADMIN_MANAGEMENT_API = {
   // Stats for the dashboard cards
   STATS_SUMMARY: "/api/v1/admin/stats/summary",
-  LIST_USERS: "/api/v1/admin/users", 
+  LIST_USERS: "/api/v1/admin/users",
   // // Data for the chart
   // REGISTRATION_STATS: "/api/v1/admin/stats/registrations",
   // // Get all users (searchable/paginated)
