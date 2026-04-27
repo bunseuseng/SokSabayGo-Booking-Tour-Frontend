@@ -101,7 +101,7 @@ const DriverRequest = () => {
             <Clock className="h-16 w-16 text-accent mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Application Under Review</h1>
             <p className="text-muted-foreground mb-4">Your driver application is being reviewed by our team. We'll notify you once it's processed.</p>
-            <p className="text-xs text-muted-foreground">Submitted: {new Date(existing.createdAt).toLocaleString()}</p>
+            {/* <p className="text-xs text-muted-foreground">Submitted: {new Date(existing.createdAt).toLocaleString()}</p> */}
           </div>
         </div>
       </div>
