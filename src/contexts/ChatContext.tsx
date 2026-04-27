@@ -218,7 +218,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Setup WebSocket connection for real-time chat
   useEffect(() => {
-    console.log("🛠️ ChatContext useEffect RUNNING! user?.id:", user?.id);
+    // console.log("🛠️ ChatContext useEffect RUNNING! user?.id:", user?.id);
     if (!user?.id) {
       console.log("🛑 user?.id is missing, aborting websocket setup");
       return;
@@ -226,7 +226,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     let isMounted = true;
     let activeClient: Client | null = null;
-    console.log("🛠️ ChatContext connectChat initialized");
+    // console.log("🛠️ ChatContext connectChat initialized");
 
     const connectChat = async () => {
       try {
@@ -268,7 +268,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             console.log("🟢 Chat WebSocket successfully connected!");
             // Subscribe to incoming messages
             activeClient!.subscribe(CHAT_API.MESSAGES_QUEUE, (frame: IMessage) => {
-              console.log("📨 Received message frame:", frame.body);
+              // console.log("📨 Received message frame:", frame.body);
               try {
                 const message: ChatMessage = JSON.parse(frame.body);
                 // console.log("✅ Parsed message:", message);
@@ -345,10 +345,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
 
         if (isMounted) {
-          console.log("🛠️ Activating client and setting stompClientRef.current");
+          // console.log("🛠️ Activating client and setting stompClientRef.current");
           activeClient.activate();
           stompClientRef.current = activeClient;
-          console.log("✅ stompClientRef successfully populated:", !!stompClientRef.current);
+          // console.log("✅ stompClientRef successfully populated:", !!stompClientRef.current);
         } else {
           // console.log("❌ isMounted was false before activate()!");
         }

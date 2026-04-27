@@ -118,12 +118,12 @@ const SkeletonRow = () => (
   </tr>
 );
 
-const chartData = [
-  { month: "Jan", users: 400, drivers: 240 },
-  { month: "Feb", users: 700, drivers: 320 },
-  { month: "Mar", users: 1200, drivers: 450 },
-  { month: "Apr", users: 1800, drivers: 580 },
-];
+// const chartData = [
+//   { month: "Jan", users: 400, drivers: 240 },
+//   { month: "Feb", users: 700, drivers: 320 },
+//   { month: "Mar", users: 1200, drivers: 450 },
+//   { month: "Apr", users: 1800, drivers: 580 },
+// ];
 
 const PAGE_SIZE = 8;
 
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* ── Chart ────────────────────────────────────────────────────────── */}
+      {/* ── Chart ──────────────────────────────────────────────────────────
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
         <Card className="shadow-sm border border-border">
           <CardHeader>
@@ -244,7 +244,7 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </motion.div>
+      </motion.div> */}
 
       {/* ── User & Driver Table ───────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>

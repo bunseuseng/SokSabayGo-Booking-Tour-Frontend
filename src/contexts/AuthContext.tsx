@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchMe]);
 
-  console.log("TOKEN USED:", localStorage.getItem(KEYS.ACCESS));
+  // console.log("TOKEN USED:", localStorage.getItem(KEYS.ACCESS));
   const loginWithGoogle = useCallback(() => {
     localStorage.setItem(KEYS.HINT, "true");
     localStorage.removeItem(KEYS.ACCESS);
