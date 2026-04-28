@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const BASE_URL = "https://service-provider-latest-2.onrender.com";
+// const BASE_URL = "https://service-provider-latest-2.onrender.com";
 
-// const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://localhost:8080";
 
 /** Axios instance with credentials (HTTP-only JWT cookies) */
 export const api = axios.create({
@@ -35,8 +35,8 @@ export const AUTH_API = {
   REGISTER: "/api/v1/auth-service/register",
   ME: "/api/v1/users/me",
   UPDATE_ME: "/api/v1/users/me",
-  // GOOGLE_OAUTH: "http://localhost:8080/oauth2/authorization/google",
-  GOOGLE_OAUTH: "https://service-provider-latest-2.onrender.com/oauth2/authorization/google",
+  GOOGLE_OAUTH: "http://localhost:8080/oauth2/authorization/google",
+  // GOOGLE_OAUTH: "https://service-provider-latest-2.onrender.com/oauth2/authorization/google",
   WS_TOKEN: "/api/v1/auth-service/ws-token",
 };
 
@@ -120,8 +120,8 @@ export const CHAT_API = {
 };
 
 // ─── WebSocket URLs ───────────────────────────────────────────
-// export const WS_URL = "http://localhost:8080/ws-soksabay";
-export const WS_URL = "https://service-provider-latest-2.onrender.com/ws-soksabay";
+export const WS_URL = "http://localhost:8080/ws-soksabay";
+// export const WS_URL = "https://service-provider-latest-2.onrender.com/ws-soksabay";
 export const NOTIFICATION_TOPIC = (email: string) => `/topic/notifications/${email}`;
 
 // ─── Review Endpoints ─────────────────────────

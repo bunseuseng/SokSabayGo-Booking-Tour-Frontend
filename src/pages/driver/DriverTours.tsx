@@ -113,8 +113,11 @@ const DriverTours = () => {
       pricePerSeat: trip.pricePerSeat?.toString() || "",
       totalSeats: trip.totalSeats?.toString() || "",
       departureTime: trip.departureTime
-        ? new Date(trip.departureTime).toISOString().slice(0, 16)
-        : "",
+    ? new Date(trip.departureTime).toLocaleString("sv-SE", {
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit"
+    }).replace(" ", "T")
+  : "",
       categoryId: trip.categoryId?.toString() || "",
       transportationType: trip.transportationType || "",
       vehicleCapacity: trip.vehicleCapacity?.toString() || "",
@@ -171,7 +174,7 @@ const DriverTours = () => {
     try {
       const parsed = new Date(form.departureTime);
       if (isNaN(parsed.getTime())) throw new Error("Invalid date");
-      departureTimeISO = parsed.toISOString();
+      departureTimeISO = form.departureTime + ":00";
     } catch {
       toast({ title: "Invalid departure time format", variant: "destructive" });
       return;
