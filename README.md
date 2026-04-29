@@ -83,3 +83,36 @@ For questions or collaboration:
 ## 📄 License
 
 This project is for educational and portfolio purposes.
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-feature`.
+3. Commit your changes: `git commit -m 'Add some feature'`.
+4. Push to the branch: `git push origin feature/your-feature`.
+5. Open a pull request.
+
+---
+
+## 🙏 Acknowledgments
+
+* Thanks to the open-source community for tools like Vite, React, and Tailwind CSS.
+* Special thanks to Cambodian tourism for inspiration.
+
+---
+
+## 🔮 Future Plans
+
+* Add real-time chat with drivers.
+* Integrate payment gateways.
+* Expand to other Southeast Asian countries.
+
+---
+
+## 📚 Resources
+
+* [Vite Documentation](https://vitejs.dev/)
+* [React Documentation](https://reactjs.org/)
+* [Tailwind CSS](https://tailwindcss.com/)
+* [shadcn/ui](https://ui.shadcn.com/)
